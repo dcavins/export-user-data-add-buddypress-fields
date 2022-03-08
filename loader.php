@@ -17,14 +17,17 @@ namespace eudAddBp;
  * @since 1.0.0
  */
 function set_filters() {
-	// Add a BuddyPress Extended Profile fields select to the export selection form.
-	add_filter( 'q/eud/api/admin/fields',  __NAMESPACE__ . '\\add_admin_fields' );
 
-	// Let the main plugin know that we'll be appending BP data.
-	add_filter( 'q/eud/export/fields', __NAMESPACE__ . '\\export_declare_bp_fields' );
+	if ( bp_is_active( 'xprofile' ) ) {
+		// Add a BuddyPress Extended Profile fields select to the export selection form.
+		add_filter( 'q/eud/api/admin/fields',  __NAMESPACE__ . '\\add_xprofile_admin_fields' );
 
-	 // Find the value for BuddyPress extended profile fields.
-	add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_value', 10, 3 );
+		// Let the main plugin know that we'll be appending BP data.
+		add_filter( 'q/eud/export/fields', __NAMESPACE__ . '\\export_declare_bp_xprofile_fields' );
+
+		 // Find the value for BuddyPress extended profile fields.
+		add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_xprofile_value', 10, 3 );
+	}
 }
 add_action( 'bp_init',  __NAMESPACE__ . '\\set_filters' );
 
@@ -37,7 +40,7 @@ add_action( 'bp_init',  __NAMESPACE__ . '\\set_filters' );
  *
  * @return array $form_fields   Array of field IDs.
  */
-function add_admin_fields( $form_fields ) {
+function add_xprofile_admin_fields( $form_fields ) {
 	$groups = bp_xprofile_get_groups( array( 'fetch_fields' => true ) );
 	$fields = array();
 	foreach ( $groups as $group ) {
@@ -62,7 +65,6 @@ function add_admin_fields( $form_fields ) {
         'options' => $options_obj,
         'options_ID' => 'id', // which index to use in the options array
         'options_title' => 'title', // which index to use in the options array
-        // 'label_select' => 'Choose profile fields to export',
         'label_select' => '',
         'multiselect' => true,
         'toggleable' => false,
@@ -79,7 +81,7 @@ function add_admin_fields( $form_fields ) {
  *
  * @return array $fields   Array of field IDs.
  */
-function export_declare_bp_fields( $fields ) {
+function export_declare_bp_xprofile_fields( $fields ) {
 	$bp_fields = get_requested_profile_field_names();
 	return array_merge( $fields, $bp_fields );
 }
@@ -140,7 +142,7 @@ function get_field_name_from_id( $id, $include_id = false ) {
  *
  * @return string The calculated value.
  */
-function provide_value( $value, $field, $user ) {
+function provide_xprofile_value( $value, $field, $user ) {
 	$bp_names = get_requested_profile_field_names();
 	if ( in_array( $field, $bp_names ) ) {
 		// get field id
