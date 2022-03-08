@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Export User Data - Add BuddyPress Fields
-Plugin URI: 
+Plugin URI: https://github.com/dcavins/export-user-data-add-buddypress-fields
 Description: Add BuddyPress fields to Q Studio's Export User Data plugin.
 Version: 1.0.0
 Author: dcavins
