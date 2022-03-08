@@ -28,17 +28,32 @@ function set_filters() {
 		 // Find the value for BuddyPress extended profile fields.
 		add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_xprofile_value', 10, 3 );
 	}
+
+	// If Member Types have been registered, offer those as well.
+	$member_types = bp_get_member_types();
+	if ( ! empty( $member_types ) ) {
+		// Add a BuddyPress Extended Profile fields select to the export selection form.
+		add_filter( 'q/eud/api/admin/fields',  __NAMESPACE__ . '\\add_member_type_admin_field' );
+
+		// Let the main plugin know that we'll be appending BP data.
+		add_filter( 'q/eud/export/fields', __NAMESPACE__ . '\\export_declare_bp_member_type_field' );
+
+		 // Find the value for BuddyPress extended profile fields.
+		add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_member_type_value', 10, 3 );
+	}
 }
 add_action( 'bp_init',  __NAMESPACE__ . '\\set_filters' );
+
+/* Extended Profile Fields *********************************************/
 
 /**
  * Add a BuddyPress Extended Profile fields select to the export selection form.
  *
  * @since 1.0.0
  *
- * @param array $form_fields   Array of field IDs.
+ * @param array $form_fields   Array of field parameters.
  *
- * @return array $form_fields   Array of field IDs.
+ * @return array $form_fields   Array of field parameters.
  */
 function add_xprofile_admin_fields( $form_fields ) {
 	$groups = bp_xprofile_get_groups( array( 'fetch_fields' => true ) );
@@ -151,6 +166,79 @@ function provide_xprofile_value( $value, $field, $user ) {
 		if ( isset( $field_obj->data->value ) ) {
 			$value = $field_obj->data->value;
 		}
+	}
+	return $value;
+}
+
+/* Member Types ********************************************************/
+
+/**
+ * Add an option to include BP Member Types in the output.
+ *
+ * @since 1.0.0
+ *
+ * @param array $form_fields   Array of field parameters.
+ *
+ * @return array $form_fields   Array of field parameters.
+ */
+function add_member_type_admin_field( $form_fields ) {
+	$options = array(
+		(object) array(
+			'id' => 'yes',
+			'title' => 'Yes',
+		),
+		(object) array(
+			'id' => 'no',
+			'title' => 'No',
+		),
+	);
+
+	$form_fields[] = array(
+		'title' => 'Include BuddyPress Member Types in Output', // string ## used for left-hand column
+        'label' => '_bp_member_type', // lowercase string ## used for name and id of select
+        'type' => 'select', // Only supported option at the moment
+        'options' => $options,
+        'options_ID' => 'id', // which index to use in the options array
+        'options_title' => 'title', // which index to use in the options array
+        'label_select' => '',
+        'multiselect' => false,
+        'toggleable' => false,
+	);
+	return $form_fields;
+}
+
+/**
+ * Let the main plugin know that we'll be appending BP data.
+ *
+ * @since 1.0.0
+ *
+ * @param array $fields   Array of field IDs.
+ *
+ * @return array $fields   Array of field IDs.
+ */
+function export_declare_bp_member_type_field( $fields ) {
+	if ( isset( $_POST['_bp_member_type'] ) && 'yes' === $_POST['_bp_member_type'] ) {
+		$fields[] = 'BP Member Type';
+	}
+
+	return $fields;
+}
+
+/**
+ * Find the value for BuddyPress member type.
+ *
+ * @since 1.0.0
+ *
+ * @param string  $value The current value.
+ * @param bool    $field The field name/id to fetch the value for.
+ * @param WP_User $user  The user to fetch the value for.
+ *
+ * @return string The calculated value.
+ */
+function provide_member_type_value( $value, $field, $user ) {
+	if ( 'BP Member Type' === $field ) {
+		$current_type = (array) bp_get_member_type( $user->ID, false );
+		$value = implode( ', ' , $current_type );
 	}
 	return $value;
 }
