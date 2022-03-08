@@ -2,7 +2,7 @@
 /*
 Plugin Name: Export User Data - Add BuddyPress Fields
 Plugin URI: 
-Description: Add BuddyPress fields to Q studio's Export User Data plugin.
+Description: Add BuddyPress fields to Q Studio's Export User Data plugin.
 Version: 1.0.0
 Author: dcavins
 License: GPL2
@@ -10,6 +10,23 @@ Text Domain: export-user-data-include-bp
 */
 
 namespace eudAddBp;
+
+/**
+ * Add filters only when BuddyPress is active.
+ *
+ * @since 1.0.0
+ */
+function set_filters() {
+	// Add a BuddyPress Extended Profile fields select to the export selection form.
+	add_filter( 'q/eud/api/admin/fields',  __NAMESPACE__ . '\\add_admin_fields' );
+
+	// Let the main plugin know that we'll be appending BP data.
+	add_filter( 'q/eud/export/fields', __NAMESPACE__ . '\\export_declare_bp_fields' );
+
+	 // Find the value for BuddyPress extended profile fields.
+	add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_value', 10, 3 );
+}
+add_action( 'bp_init',  __NAMESPACE__ . '\\set_filters' );
 
 /**
  * Add a BuddyPress Extended Profile fields select to the export selection form.
@@ -52,7 +69,6 @@ function add_admin_fields( $form_fields ) {
 	);
 	return $form_fields;
 }
-add_filter( 'q/eud/api/admin/fields',  __NAMESPACE__ . '\\add_admin_fields' );
 
 /**
  * Let the main plugin know that we'll be appending BP data.
@@ -67,7 +83,6 @@ function export_declare_bp_fields( $fields ) {
 	$bp_fields = get_requested_profile_field_names();
 	return array_merge( $fields, $bp_fields );
 }
-add_filter( 'q/eud/export/fields', __NAMESPACE__ . '\\export_declare_bp_fields' );
 
 /**
  * Using the POSTed field IDs, get the profile field name.
@@ -115,7 +130,7 @@ function get_field_name_from_id( $id, $include_id = false ) {
 }
 
 /**
- * Find the value for extended profile fields.
+ * Find the value for BuddyPress extended profile fields.
  *
  * @since 1.0.0
  *
@@ -137,4 +152,3 @@ function provide_value( $value, $field, $user ) {
 	}
 	return $value;
 }
-add_filter( 'q/eud/export/field_value_before_formatting', __NAMESPACE__ . '\\provide_value', 10, 3 );
