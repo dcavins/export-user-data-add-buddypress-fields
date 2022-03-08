@@ -164,7 +164,10 @@ function provide_xprofile_value( $value, $field, $user ) {
 		$field_id = substr( $field, strrpos( $field, '_' ) + 1 );
 		$field_obj = xprofile_get_field( $field_id, $user->ID );
 		if ( isset( $field_obj->data->value ) ) {
-			$value = $field_obj->data->value;
+			$value = maybe_unserialize( $field_obj->data->value );
+			if ( is_array( $value ) ) {
+				$value = implode( ', ' , $value );
+			}
 		}
 	}
 	return $value;
